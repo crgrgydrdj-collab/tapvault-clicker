@@ -604,6 +604,14 @@
 
   <!-- STEP 2 will paste full JS here -->
   <script>
+    const tg = window.Telegram && window.Telegram.WebApp
+  ? window.Telegram.WebApp
+  : null;
+
+if (tg) {
+  tg.ready();
+  tg.expand();
+}
     (() => {
   /* =========================
      CONFIG
@@ -691,11 +699,7 @@
      Telegram context (optional)
      НЕ ЛОМАЕМ браузер! (можно открывать и там)
   ========================= */
-  const tg = (window.Telegram && window.Telegram.WebApp) ? window.Telegram.WebApp : null;
-  if (tg) {
-    try { tg.ready(); } catch {}
-    try { tg.expand(); } catch {}
-  }
+  
 
   function getTGUserPayload() {
     if (!tg) return null;

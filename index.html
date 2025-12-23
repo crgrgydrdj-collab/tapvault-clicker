@@ -1,0 +1,378 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+  <title>TapVault</title>
+  <style>
+    :root{
+      --glass: rgba(16, 22, 28, .55);
+      --glass2: rgba(16, 22, 28, .35);
+      --stroke: rgba(255,255,255,.10);
+      --text: rgba(255,255,255,.92);
+      --muted: rgba(255,255,255,.65);
+      --good: #43e07b;
+      --bad: #ff5467;
+      --btn: rgba(20, 28, 36, .55);
+      --btn2: rgba(20, 28, 36, .35);
+      --accent: rgba(70, 160, 255, .85);
+      --radius: 22px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:-apple-system,BlinkMacSystemFont,Inter,Segoe UI,Roboto,Arial,sans-serif;
+      color:var(--text);
+      min-height:100vh;
+      background:
+        radial-gradient(1200px 800px at 10% 0%, rgba(120, 90, 255, .35), transparent 55%),
+        radial-gradient(900px 700px at 90% 10%, rgba(70, 190, 255, .25), transparent 55%),
+        radial-gradient(900px 900px at 50% 100%, rgba(255, 190, 80, .22), transparent 60%),
+        #0b1117;
+      overflow-x:hidden;
+    }
+    /* фон-картинка */
+    .bg{
+      position:fixed; inset:0;
+      background:url('./bg.jpg') center/cover no-repeat;
+      opacity:.35;
+      filter:saturate(1.1) contrast(1.05);
+      z-index:-2;
+    }
+    .bg2{
+      position:fixed; inset:0;
+      background:linear-gradient(180deg, rgba(8,12,16,.40), rgba(8,12,16,.70));
+      z-index:-1;
+    }
+
+    .wrap{
+      max-width:520px;
+      margin:0 auto;
+      padding:16px 14px 28px;
+    }
+
+    .topbar{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      padding:14px 14px;
+      border:1px solid var(--stroke);
+      border-radius: var(--radius);
+      background: linear-gradient(180deg, var(--glass), var(--glass2));
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      box-shadow: 0 18px 60px rgba(0,0,0,.35);
+    }
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+    .logo{
+      width:38px;height:38px;
+      border-radius:14px;
+      display:grid;place-items:center;
+      border:1px solid rgba(255,255,255,.12);
+      background:rgba(0,0,0,.18);
+      font-weight:900;
+      letter-spacing:.5px;
+    }
+    .title{
+      display:flex;
+      flex-direction:column;
+      line-height:1.1;
+    }
+    .title b{font-size:16px}
+    .title span{font-size:12px;color:var(--muted)}
+
+    .pill{
+      border:1px solid rgba(255,255,255,.12);
+      border-radius:16px;
+      padding:10px 12px;
+      background:rgba(0,0,0,.18);
+      color:var(--muted);
+      font-size:13px;
+      display:flex; gap:8px; align-items:center;
+      white-space:nowrap;
+    }
+
+    .card{
+      margin-top:12px;
+      padding:16px;
+      border-radius: var(--radius);
+      border:1px solid var(--stroke);
+      background: linear-gradient(180deg, var(--glass), var(--glass2));
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      box-shadow: 0 18px 60px rgba(0,0,0,.35);
+    }
+
+    .stats{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:10px;
+      margin-top:10px;
+    }
+    .stat{
+      padding:12px 12px;
+      border-radius:18px;
+      border:1px solid rgba(255,255,255,.10);
+      background:rgba(0,0,0,.14);
+    }
+    .stat .k{font-size:12px;color:var(--muted)}
+    .stat .v{font-size:20px;font-weight:900;margin-top:4px}
+    .v.good{color:var(--good)}
+    .v.bad{color:var(--bad)}
+
+    .energyBar{
+      margin-top:12px;
+      height:10px;
+      border-radius:999px;
+      background:rgba(255,255,255,.08);
+      overflow:hidden;
+      border:1px solid rgba(255,255,255,.10);
+    }
+    .energyFill{
+      height:100%;
+      width:0%;
+      background:linear-gradient(90deg, rgba(70,160,255,.95), rgba(120,255,200,.85));
+      border-radius:999px;
+      transition: width .18s ease;
+    }
+    .hint{
+      margin-top:10px;
+      color:var(--muted);
+      font-size:12px;
+    }
+
+    .tapZone{
+      margin-top:14px;
+      display:grid;
+      place-items:center;
+      padding:18px 0 6px;
+    }
+    .starBtn{
+      width:240px;
+      height:240px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.12);
+      background: radial-gradient(circle at 30% 25%, rgba(255,255,255,.14), rgba(0,0,0,.18));
+      box-shadow:
+        0 20px 70px rgba(0,0,0,.45),
+        inset 0 0 0 1px rgba(255,255,255,.06);
+      display:grid;
+      place-items:center;
+      user-select:none;
+      -webkit-user-select:none;
+      cursor:pointer;
+      position:relative;
+      overflow:hidden;
+    }
+    .starBtn:active{
+      transform: scale(.985);
+    }
+    .starImg{
+      width:130px;
+      height:130px;
+      filter: drop-shadow(0 18px 18px rgba(0,0,0,.35));
+      transition: transform .08s ease;
+      pointer-events:none;
+    }
+    .pop{
+      position:absolute;
+      font-weight:900;
+      color:#fff;
+      text-shadow:0 10px 30px rgba(0,0,0,.55);
+      animation: floatUp .7s ease forwards;
+      pointer-events:none;
+    }
+    @keyframes floatUp{
+      from{transform:translateY(0);opacity:1}
+      to{transform:translateY(-48px);opacity:0}
+    }
+
+    .actions{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:10px;
+      margin-top:12px;
+    }
+    button{
+      border:none;
+      border-radius:18px;
+      padding:14px 14px;
+      font-size:16px;
+      font-weight:900;
+      color:rgba(255,255,255,.92);
+      background: linear-gradient(180deg, rgba(70,160,255,.85), rgba(50,130,230,.75));
+      box-shadow: 0 18px 50px rgba(0,0,0,.30);
+      cursor:pointer;
+    }
+    button.secondary{
+      background: linear-gradient(180deg, var(--btn), var(--btn2));
+      border:1px solid rgba(255,255,255,.12);
+      box-shadow:none;
+      color:rgba(255,255,255,.85);
+      font-weight:800;
+    }
+    .msg{
+      margin-top:10px;
+      font-size:13px;
+      color:var(--muted);
+      min-height:18px;
+    }
+    .msg.good{color:var(--good);font-weight:800}
+    .msg.bad{color:var(--bad);font-weight:800}
+  </style>
+</head>
+<body>
+  <div class="bg"></div>
+  <div class="bg2"></div>
+
+  <div class="wrap">
+    <div class="topbar">
+      <div class="brand">
+        <div class="logo">⭐</div>
+        <div class="title">
+          <b>TapVault</b>
+          <span>Тапай звезду — копи клики</span>
+        </div>
+      </div>
+      <div class="pill" id="who">…</div>
+    </div>
+
+    <div class="card">
+      <div class="stats">
+        <div class="stat">
+          <div class="k">Клики</div>
+          <div class="v good" id="clicks">0</div>
+        </div>
+        <div class="stat">
+          <div class="k">Энергия</div>
+          <div class="v" id="energy">250</div>
+        </div>
+      </div>
+
+      <div class="energyBar"><div class="energyFill" id="energyFill"></div></div>
+      <div class="hint">Энергия восстанавливается: +1/сек, максимум 250.</div>
+
+      <div class="tapZone">
+        <div class="starBtn" id="tap">
+          <img class="starImg" src="./star.png" alt="star"/>
+        </div>
+        <div class="msg" id="msg"></div>
+      </div>
+
+      <div class="actions">
+        <button id="redeem">Обменять 50 000 → заявка</button>
+        <button class="secondary" id="refresh">Обновить</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+  // === настройка ===
+  // сюда вставь свой worker url:
+  const WORKER_URL = "https://yellow-bush-d819.y7zwg8vpqt.workers.dev";
+
+  const tg = window.Telegram?.WebApp;
+  if (tg) tg.ready();
+
+  const elClicks = document.getElementById("clicks");
+  const elEnergy = document.getElementById("energy");
+  const elEnergyFill = document.getElementById("energyFill");
+  const elMsg = document.getElementById("msg");
+  const elWho = document.getElementById("who");
+  const tap = document.getElementById("tap");
+  const redeem = document.getElementById("redeem");
+  const refresh = document.getElementById("refresh");
+
+  function initData(){
+    return tg ? tg.initData : "";
+  }
+
+  function setMsg(text, type){
+    elMsg.textContent = text || "";
+    elMsg.className = "msg" + (type ? (" " + type) : "");
+  }
+
+  function paint(state, user){
+    elClicks.textContent = state.clicks ?? 0;
+    elEnergy.textContent = Math.floor(state.energy ?? 0);
+    const pct = Math.max(0, Math.min(100, ((state.energy ?? 0) / 250) * 100));
+    elEnergyFill.style.width = pct + "%";
+
+    if (user?.username) elWho.textContent = "@" + user.username;
+    else if (user?.id) elWho.textContent = "ID " + user.id;
+    else elWho.textContent = "Гость";
+  }
+
+  async function api(path, body){
+    const r = await fetch(WORKER_URL + path, {
+      method: "POST",
+      headers: { "content-type":"application/json" },
+      body: JSON.stringify(body)
+    });
+    return r.json();
+  }
+
+  async function load(){
+    setMsg("Загрузка…");
+    const res = await api("/api/status", { initData: initData() });
+    if (!res.ok){
+      setMsg("Ошибка авторизации. Открой в Telegram Mini App.", "bad");
+      return;
+    }
+    paint(res.state, res.user);
+    setMsg("Готово ✅", "good");
+  }
+
+  function popPlusOne(){
+    const p = document.createElement("div");
+    p.className = "pop";
+    p.textContent = "+1";
+    p.style.left = (110 + Math.random()*30) + "px";
+    p.style.top = (110 + Math.random()*30) + "px";
+    tap.appendChild(p);
+    setTimeout(()=>p.remove(), 800);
+  }
+
+  tap.addEventListener("click", async ()=>{
+    setMsg("");
+    const res = await api("/api/click", { initData: initData() });
+    if (!res.ok){
+      setMsg("Ошибка. Открой через Telegram.", "bad");
+      return;
+    }
+    paint(res.state, res.user);
+
+    if (res.message === "NO_ENERGY"){
+      setMsg("Нет энергии 😴 Подожди, она восстановится.", "bad");
+      return;
+    }
+    popPlusOne();
+  });
+
+  redeem.addEventListener("click", async ()=>{
+    setMsg("Отправляю заявку…");
+    const res = await api("/api/redeem", { initData: initData() });
+    if (!res.ok){
+      if (res.error === "NOT_ENOUGH_CLICKS"){
+        setMsg("Нужно 50 000 кликов для обмена.", "bad");
+      } else {
+        setMsg("Ошибка обмена.", "bad");
+      }
+      paint(res.state || {}, res.user);
+      return;
+    }
+    paint(res.state, res.user);
+    setMsg("Заявка отправлена ✅ Жди ответа в Telegram.", "good");
+  });
+
+  refresh.addEventListener("click", load);
+
+  load();
+</script>
+</body>
+</html>

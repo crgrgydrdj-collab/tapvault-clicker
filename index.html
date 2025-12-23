@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"/>
+<title>TapVault</title>
+
+<style>
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: linear-gradient(180deg, #4b2fa8 0%, #2c3f8f 40%, #c49a2c 100%);
+  color: #fff;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.header {
+  padding: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header h1 {
+  margin: 0;
+  font-size: 28px;
+}
+
+.pro-badge {
+  background: rgba(0,0,0,0.35);
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 14px;
+}
+
+.card {
+  margin: 0 16px;
+  background: rgba(0,0,0,0.35);
+  border-radius: 20px;
+  padding: 20px;
+}
+
+.counter {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 36px;
+  font-weight: 700;
+}
+
+.star-area {
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
+}
+
+.star {
+  width: 220px;
+  height: 220px;
+  background: url("IMG_0933.webp") center/contain no-repeat;
+}
+
+.energy {
+  margin-top: 20px;
+}
+
+.energy-bar {
+  height: 10px;
+  background: rgba(255,255,255,0.2);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.energy-fill {
+  height: 100%;
+  background: linear-gradient(90deg,#ffd65a,#ffb300);
+  width: 100%;
+}
+
+.energy-text {
+  margin-top: 6px;
+  font-size: 14px;
+  opacity: 0.85;
+}
+
+.button {
+  margin-top: 16px;
+  background: linear-gradient(180deg,#ffd65a,#ffb300);
+  color: #000;
+  border-radius: 14px;
+  padding: 14px;
+  text-align: center;
+  font-weight: 600;
+}
+
+.tabs {
+  margin-top: auto;
+  display: flex;
+  padding: 12px;
+  background: rgba(0,0,0,0.4);
+  gap: 8px;
+}
+
+.tab {
+  flex: 1;
+  text-align: center;
+  padding: 10px;
+  border-radius: 14px;
+  opacity: 0.6;
+}
+
+.tab.active {
+  background: rgba(255,255,255,0.15);
+  opacity: 1;
+}
+
+.section {
+  display: none;
+}
+
+.section.active {
+  display: block;
+}
+
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  display: none;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-box {
+  background: #1f2c4f;
+  padding: 20px;
+  border-radius: 16px;
+  width: 80%;
+  text-align: center;
+}
+</style>
+</head>
+
+<body>
+<div class="app">
+
+  <div class="header">
+    <h1>TapVault</h1>
+    <div class="pro-badge" id="proStatus">PRO: OFF</div>
+  </div>
+
+  <!-- ГЛАВНАЯ -->
+  <div class="section active" id="home">
+    <div class="card">
+      <div class="counter">⭐ <span id="stars">0</span></div>
+
+      <div class="star-area">
+        <div class="star" id="star"></div>
+      </div>
+
+      <div class="energy">
+        <div class="energy-bar">
+          <div class="energy-fill" id="energyFill"></div>
+        </div>
+        <div class="energy-text">
+          Энергия <span id="energyText"></span>
+        </div>
+      </div>
+
+      <div class="button">Обменять 50 000 кликов → ⭐</div>
+    </div>
+  </div>
+
+  <!-- PRO -->
+  <div class="section" id="pro">
+    <div class="card">
+      <h3>PRO доступ</h3>
+      <p>Чтобы получить промокод: напиши <b>@xarm0</b> — цена 150₽.</p>
+      <div class="button">Ввести промокод</div>
+    </div>
+  </div>
+
+  <!-- ОБМЕН -->
+  <div class="section" id="exchange">
+    <div class="card">
+      <h3>Обмен</h3>
+      <p>Обмен доступен при наличии 50 000 кликов.</p>
+      <div class="button">Отправить заявку на вывод</div>
+    </div>
+  </div>
+
+  <!-- ЛИДЕРЫ -->
+  <div class="section" id="leaders">
+    <div class="card">
+      <h3>Лидеры</h3>
+      <p>В разработке.</p>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="home">Главная</div>
+    <div class="tab" data-tab="pro">PRO</div>
+    <div class="tab" data-tab="exchange">Обмен</div>
+    <div class="tab" data-tab="leaders">Лидеры</div>
+  </div>
+</div>
+
+<div class="modal" id="captcha">
+  <div class="modal-box">
+    <p>Подтверди, что ты человек</p>
+    <div class="button" id="captchaOk">Я не бот</div>
+  </div>
+</div>
+
+<script>
+let stars = Number(localStorage.getItem("stars") || 0);
+let energy = Number(localStorage.getItem("energy") || 250);
+let lastExit = Number(localStorage.getItem("lastExit") || Date.now());
+
+const MAX_ENERGY = 250;
+
+function restoreEnergy() {
+  const diff = Math.floor((Date.now() - lastExit) / 1000);
+  energy = Math.min(MAX_ENERGY, energy + diff);
+}
+
+restoreEnergy();
+
+function updateUI() {
+  document.getElementById("stars").textContent = stars;
+  document.getElementById("energyText").textContent = energy + "/" + MAX_ENERGY;
+  document.getElementById("energyFill").style.width = (energy / MAX_ENERGY * 100) + "%";
+}
+
+updateUI();
+
+document.getElementById("star").addEventListener("click", () => {
+  if (energy <= 0) return;
+  energy--;
+  stars++;
+  updateUI();
+});
+
+setInterval(() => {
+  document.getElementById("captcha").style.display = "flex";
+}, 35000);
+
+document.getElementById("captchaOk").onclick = () => {
+  document.getElementById("captcha").style.display = "none";
+};
+
+window.addEventListener("beforeunload", () => {
+  localStorage.setItem("stars", stars);
+  localStorage.setItem("energy", energy);
+  localStorage.setItem("lastExit", Date.now());
+});
+
+document.querySelectorAll(".tab").forEach(tab => {
+  tab.onclick = () => {
+    document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+    document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
+    tab.classList.add("active");
+    document.getElementById(tab.dataset.tab).classList.add("active");
+  };
+});
+</script>
+</body>
+</html>

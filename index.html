@@ -520,7 +520,14 @@
 
         <div class="field">
           <span class="tag">Промокод</span>
-          <input class="input" id="promoInput" placeholder="TV-XXXX-XXXX" />
+          <input
+  class="input"
+  id="promoInput"
+  type="text"
+  inputmode="text"
+  placeholder="TV-XXXX-XXXX"
+  autocomplete="off"
+/>
           <div class="btnPrimary" id="promoBtn">Активировать PRO</div>
         </div>
 
@@ -578,7 +585,15 @@
     <div class="glass goldGlow modalBox">
       <div class="h2">Антибот</div>
       <p class="p" id="captchaQuestion">Сколько будет 7 + 5?</p>
-      <input class="input" id="captchaAnswer" placeholder="Ответ" inputmode="numeric" />
+      <input
+  class="input"
+  id="captchaAnswer"
+  type="number"
+  inputmode="numeric"
+  pattern="[0-9]*"
+  placeholder="Ответ"
+  autocomplete="off"
+/>
       <div class="btnPrimary" id="captchaSubmit">Проверить</div>
       <div class="smallNote" id="captchaHint">Капча не закрывается. Нужно решить пример.</div>
     </div>
@@ -836,7 +851,7 @@
     captchaModal.style.display = "flex";
 
     // фокус на ввод (удобно)
-    setTimeout(() => { try { captchaAnswer.focus(); } catch {} }, 50);
+    setTimeout(() => { try { captchaAnswer.focus(); } catch {} }, 350);
   }
 
   function hideCaptcha() {
@@ -863,22 +878,32 @@
     }
   }
 
-  // Важный анти-скип: клики по модалке НЕ закрывают её
-  // И не должны "пробивать" в приложение.
-  captchaModal.addEventListener("click", (e) => {
+  // Anti-skip без поломки клавиатуры на iOS:
+// 1) клики по фону модалки не пробивают в приложение
+// 2) но input остаётся кликабельным (клавиатура появляется)
+captchaModal.addEventListener("click", (e) => {
+  // если клик был НЕ по самому input и НЕ по кнопке — блокируем
+  const t = e.target;
+  const allow = (t === captchaAnswer) || (t === captchaSubmit) || (t.closest && (t.closest("#captchaAnswer") || t.closest("#captchaSubmit")));
+  if (!allow) {
     e.preventDefault();
     e.stopPropagation();
-  }, true);
-  captchaModal.addEventListener("touchstart", (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-  }, { capture: true, passive: false });
+  }
+}, true);
+
+// iOS Telegram: открываем клавиатуру по реальному тапу
+captchaAnswer.addEventListener("touchstart", () => {
+  captchaAnswer.focus();
+}, { passive: true });
+
+captchaAnswer.addEventListener("click", () => {
+  captchaAnswer.focus();
+});
 
   captchaSubmit.addEventListener("click", (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    submitCaptcha();
-  });
+  e.preventDefault();
+  submitCaptcha();
+});
   captchaAnswer.addEventListener("keydown", (e) => {
     if (e.key === "Enter") submitCaptcha();
   });

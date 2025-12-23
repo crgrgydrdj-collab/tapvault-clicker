@@ -962,46 +962,55 @@ captchaAnswer.addEventListener("click", () => {
   }
 
   async function activatePro() {
-    const code = String(promoInput.value || "").trim().toUpperCase();
-    if (!code) { showToast("Введи промокод"); return; }
+  const code = String(promoInput.value || "").trim().toUpperCase();
+  if (!code) {
+    showToast("Введи промокод");
+    return;
+  }
 
-    if (!PROMO_CODES.has(code)) {
-      showToast("Неверный промокод");
-      return;
-    }
+  showToast("Проверяем промокод…");
 
-    const used = getUsedCodes();
-    if (used.has(code)) {
-      showToast("Код уже использован");
-      return;
-    }
+  const payload = {
+    code,
+    tg_user: getTGUserPayload(),
+    initData: tg ? (tg.initData || "") : "",
+    ua: navigator.userAgent,
+    ts: Date.now()
+  };
 
-    // Пытаемся через Worker (если есть). Если нет — локально активируем.
-    let workerOk = false;
+  try {
+    const r = await fetch(WORKER_URL + "/redeem", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    let res = null;
     try {
-      const res = await redeemViaWorker(code);
-      if (res && res.ok) workerOk = true;
-      // если worker вернул что-то типа {ok:false, reason:"used"} — покажем.
-      if (res && res.ok === false) {
-        showToast(res.reason ? String(res.reason) : "Код отклонён");
-        return;
-      }
-    } catch {
-      // worker мог быть не готов — fallback
-      workerOk = false;
+      res = await r.json();
+    } catch {}
+
+    if (!r.ok || !res) {
+      showToast("Ошибка сервера");
+      return;
     }
 
-    // Локальная активация (и как "одноразовый" на устройстве)
-    used.add(code);
-    saveUsedCodes(used);
+    if (res.ok !== true) {
+      showToast(res.reason || "Промокод недействителен");
+      return;
+    }
 
+    // ✅ ПРО АКТИВИРОВАН
     isPro = true;
     localStorage.setItem(LS.pro, "1");
     updateUI();
 
-    showToast(workerOk ? "PRO активирован ✅" : "PRO активирован ✅");
-  }
+    showToast("PRO активирован ✅");
 
+  } catch (e) {
+    showToast("Worker недоступен");
+  }
+}
   promoBtn.addEventListener("click", (e) => {
     e.preventDefault();
     e.stopPropagation();

@@ -1,0 +1,852 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>TapVault</title>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --glass: rgba(18, 24, 46, 0.55);
+      --glass2: rgba(20, 26, 54, 0.35);
+      --stroke: rgba(255,255,255,0.10);
+      --text: rgba(255,255,255,0.92);
+      --muted: rgba(255,255,255,0.65);
+      --muted2: rgba(255,255,255,0.45);
+      --accent: #ffcc3a;
+      --accent2:#ff8d2a;
+      --ok:#2ee59d;
+      --bad:#ff5a6a;
+      --shadow: 0 18px 55px rgba(0,0,0,0.45);
+      --radius: 18px;
+      --radius2: 22px;
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Inter,Arial,sans-serif;
+      color:var(--text);
+      background: var(--bg);
+      overflow:hidden;
+    }
+
+    /* Background image */
+    .bg{
+      position:fixed; inset:0;
+      background:
+        radial-gradient(1200px 800px at 20% 10%, rgba(255, 200, 80, 0.18), transparent 60%),
+        radial-gradient(900px 600px at 85% 20%, rgba(140, 90, 255, 0.20), transparent 55%),
+        radial-gradient(900px 600px at 50% 95%, rgba(30, 210, 255, 0.14), transparent 60%),
+        url("IMG_0907.jpeg");
+      background-size: cover;
+      background-position: center;
+      filter:saturate(1.05) contrast(1.05);
+      transform: scale(1.02);
+    }
+    .vignette{
+      position:fixed; inset:0;
+      background:
+        radial-gradient(900px 650px at 50% 35%, rgba(0,0,0,0.12), rgba(0,0,0,0.70)),
+        linear-gradient(to bottom, rgba(0,0,0,0.25), rgba(0,0,0,0.58));
+      pointer-events:none;
+    }
+
+    .app{
+      position:relative;
+      height:100%;
+      display:flex;
+      flex-direction:column;
+      padding: 18px 16px 14px;
+      padding-bottom: calc(14px + env(safe-area-inset-bottom));
+    }
+
+    .topbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom:12px;
+    }
+    .brand{
+      font-weight:800;
+      letter-spacing:0.2px;
+      font-size:22px;
+      text-shadow: 0 10px 30px rgba(0,0,0,0.35);
+    }
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 12px;
+      border-radius:999px;
+      background:rgba(0,0,0,0.25);
+      border:1px solid var(--stroke);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+      font-size:13px;
+      color:var(--muted);
+    }
+    .dot{
+      width:8px;height:8px;border-radius:99px;
+      background: var(--bad);
+      box-shadow:0 0 0 4px rgba(255,90,106,0.18);
+    }
+    .dot.ok{
+      background: var(--ok);
+      box-shadow:0 0 0 4px rgba(46,229,157,0.16);
+    }
+
+    .card{
+      background: var(--glass);
+      border: 1px solid var(--stroke);
+      border-radius: var(--radius2);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+    }
+
+    .screen{
+      flex:1;
+      display:none;
+      overflow:hidden;
+    }
+    .screen.active{
+      display:block;
+    }
+
+    /* Main screen layout */
+    .mainWrap{
+      height:100%;
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+    }
+
+    .statsCard{
+      padding:14px 14px 12px;
+    }
+    .statsRow{
+      display:flex;
+      align-items:flex-end;
+      justify-content:space-between;
+      gap:10px;
+    }
+    .score{
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+    .score img{
+      width:34px;height:34px;
+      filter: drop-shadow(0 10px 20px rgba(0,0,0,0.25));
+    }
+    .scoreNum{
+      font-size:36px;
+      font-weight:900;
+      letter-spacing:0.5px;
+      line-height:1;
+    }
+    .scoreLabel{
+      margin-top:6px;
+      color:var(--muted);
+      font-size:13px;
+      line-height:1.35;
+    }
+
+    .proBadge{
+      display:flex;
+      flex-direction:column;
+      align-items:flex-end;
+      gap:8px;
+    }
+    .proToggle{
+      padding:8px 12px;
+      border-radius:999px;
+      background: rgba(0,0,0,0.22);
+      border:1px solid var(--stroke);
+      color:var(--muted);
+      font-size:12px;
+    }
+    .proToggle b{color:var(--text)}
+    .miniHint{
+      color:var(--muted2);
+      font-size:12px;
+      text-align:right;
+    }
+
+    .tapZone{
+      flex:1;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      position:relative;
+      overflow:hidden;
+    }
+    .tapBtn{
+      width:min(280px, 74vw);
+      aspect-ratio: 1 / 1;
+      border-radius: 28px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0.03));
+      border:1px solid rgba(255,255,255,0.13);
+      box-shadow: 0 30px 80px rgba(0,0,0,0.55);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      position:relative;
+      user-select:none;
+      -webkit-user-select:none;
+      touch-action: manipulation;
+      transform: translateZ(0);
+    }
+    .tapBtn:active{
+      transform: scale(0.985);
+    }
+    .tapBtn img{
+      width:72%;
+      height:72%;
+      object-fit:contain;
+      filter: drop-shadow(0 22px 38px rgba(0,0,0,0.35));
+      pointer-events:none;
+    }
+    .tapGlow{
+      position:absolute;
+      inset:-35%;
+      background: radial-gradient(circle at 50% 55%, rgba(255, 204, 58, 0.22), transparent 55%);
+      pointer-events:none;
+    }
+
+    .energyCard{
+      padding:14px;
+    }
+    .energyRow{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      margin-bottom:10px;
+      color:var(--muted);
+      font-size:13px;
+    }
+    .bar{
+      height:12px;
+      border-radius:999px;
+      background: rgba(255,255,255,0.10);
+      border:1px solid rgba(255,255,255,0.10);
+      overflow:hidden;
+    }
+    .bar > div{
+      height:100%;
+      width:0%;
+      background: linear-gradient(90deg, rgba(255,204,58,0.95), rgba(255,141,42,0.95));
+      border-radius:999px;
+      box-shadow:0 12px 40px rgba(255,175,50,0.20);
+      transition: width 180ms ease;
+    }
+
+    .actions{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+    .btn{
+      width:100%;
+      padding:14px 14px;
+      border-radius: 16px;
+      border:1px solid rgba(255,255,255,0.12);
+      background: rgba(0,0,0,0.20);
+      color:var(--text);
+      font-size:15px;
+      font-weight:700;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:10px;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+      cursor:pointer;
+      user-select:none;
+      -webkit-user-select:none;
+    }
+    .btn.primary{
+      background: linear-gradient(180deg, rgba(60,95,255,0.35), rgba(60,95,255,0.18));
+    }
+    .btn.gold{
+      background: linear-gradient(180deg, rgba(255,204,58,0.35), rgba(255,141,42,0.18));
+    }
+    .btn:active{transform: scale(0.99)}
+    .btn small{
+      font-weight:600;
+      color:var(--muted);
+    }
+
+    .subtext{
+      margin-top:10px;
+      color:var(--muted2);
+      font-size:12px;
+      line-height:1.35;
+      text-align:center;
+    }
+
+    /* Tabs */
+    .tabs{
+      margin-top:12px;
+      display:flex;
+      gap:10px;
+      padding:10px;
+      border-radius: 18px;
+      background: rgba(0,0,0,0.22);
+      border:1px solid rgba(255,255,255,0.10);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      box-shadow: 0 14px 40px rgba(0,0,0,0.28);
+    }
+    .tab{
+      flex:1;
+      padding:10px 8px;
+      border-radius: 14px;
+      color: var(--muted);
+      font-size:12px;
+      font-weight:700;
+      text-align:center;
+      border:1px solid transparent;
+      background: transparent;
+      user-select:none;
+      -webkit-user-select:none;
+    }
+    .tab.active{
+      color: var(--text);
+      background: rgba(255,255,255,0.08);
+      border-color: rgba(255,255,255,0.12);
+    }
+
+    /* Other screens */
+    .pane{
+      padding:14px;
+      height:100%;
+      overflow:auto;
+    }
+    .h1{font-weight:900;font-size:18px;margin:4px 0 12px}
+    .p{color:var(--muted);font-size:14px;line-height:1.5;margin:0 0 12px}
+    .row{
+      display:flex; gap:10px; align-items:center;
+    }
+    .input{
+      width:100%;
+      padding:12px 12px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,0.14);
+      background: rgba(0,0,0,0.20);
+      color:var(--text);
+      font-size:15px;
+      outline:none;
+    }
+
+    /* Modal */
+    .modalOverlay{
+      position:fixed; inset:0;
+      background: rgba(0,0,0,0.55);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding: 18px;
+      z-index:50;
+    }
+    .modalOverlay.show{display:flex}
+    .modal{
+      width:min(520px, 100%);
+      padding: 14px;
+      border-radius: 18px;
+      background: rgba(18,24,46,0.85);
+      border:1px solid rgba(255,255,255,0.12);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      box-shadow: 0 22px 80px rgba(0,0,0,0.55);
+    }
+    .modalTitle{font-weight:900;margin:0 0 8px}
+    .modalText{color:var(--muted);margin:0 0 12px;line-height:1.45}
+    .modalActions{display:flex; gap:10px}
+    .modalActions .btn{flex:1}
+
+    /* Floating +1 */
+    .pop{
+      position:absolute;
+      font-weight:900;
+      color: rgba(255,255,255,0.95);
+      text-shadow: 0 8px 18px rgba(0,0,0,0.35);
+      pointer-events:none;
+      animation: pop 800ms ease forwards;
+      transform: translate(-50%, -50%);
+      z-index:5;
+    }
+    @keyframes pop{
+      0%{opacity:0; transform: translate(-50%,-50%) translateY(8px) scale(0.96)}
+      15%{opacity:1}
+      100%{opacity:0; transform: translate(-50%,-50%) translateY(-34px) scale(1.06)}
+    }
+  </style>
+</head>
+
+<body>
+  <div class="bg"></div>
+  <div class="vignette"></div>
+
+  <div class="app">
+    <div class="topbar">
+      <div class="brand">TapVault</div>
+      <div class="pill" id="connPill">
+        <span class="dot" id="connDot"></span>
+        <span id="connText">Не в Telegram</span>
+      </div>
+    </div>
+
+    <!-- MAIN -->
+    <div class="screen active" id="screen-main">
+      <div class="mainWrap">
+
+        <div class="card statsCard">
+          <div class="statsRow">
+            <div>
+              <div class="score">
+                <img src="IMG_0933.webp" alt="star" />
+                <div class="scoreNum" id="scoreNum">0</div>
+              </div>
+              <div class="scoreLabel">Тапай звёздочку — копи клики — меняй на ⭐</div>
+            </div>
+
+            <div class="proBadge">
+              <div class="proToggle" id="proToggle"><b>PRO</b>: OFF</div>
+              <div class="miniHint">Вкладка PRO → промокод (150₽)</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="tapZone">
+          <div class="tapBtn" id="tapBtn">
+            <div class="tapGlow"></div>
+            <img src="IMG_0933.webp" alt="Tap" />
+          </div>
+        </div>
+
+        <div class="card energyCard">
+          <div class="energyRow">
+            <div>Энергия</div>
+            <div><span id="energyText">0/250</span></div>
+          </div>
+          <div class="bar"><div id="energyFill"></div></div>
+
+          <div class="actions" style="margin-top:12px;">
+            <button class="btn gold" id="btnRedeem">Обменять 50 000 кликов → ⭐</button>
+          </div>
+
+          <div class="subtext">
+            Антибот-проверка появляется раз в 30–40 секунд.<br/>
+            Чтобы получить промокод: напиши <b>@xarm0</b> — цена <b>150₽</b>.
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- PRO -->
+    <div class="screen" id="screen-pro">
+      <div class="card pane">
+        <div class="h1">PRO (150₽)</div>
+        <p class="p">
+          PRO включается через одноразовый промокод.<br/>
+          Чтобы получить промокод: напиши <b>@xarm0</b> — цена <b>150₽</b>.
+        </p>
+
+        <div class="row" style="margin-bottom:10px;">
+          <input class="input" id="promoInput" placeholder="Введи промокод (например TV-1A2B-3C4D)" />
+        </div>
+        <button class="btn primary" id="btnPromo">Активировать промокод</button>
+
+        <p class="p" style="margin-top:14px;color:var(--muted2)">
+          После активации PRO появится статус “PRO: ON”.
+        </p>
+      </div>
+    </div>
+
+    <!-- EXCHANGE -->
+    <div class="screen" id="screen-exchange">
+      <div class="card pane">
+        <div class="h1">Обмен</div>
+        <p class="p">
+          Нажми кнопку — заявка придёт администратору. После заявки клики списываются.
+        </p>
+
+        <div class="card" style="padding:14px;background:var(--glass2);border:1px solid var(--stroke);border-radius:18px;">
+          <div style="display:flex;justify-content:space-between;color:var(--muted);font-size:13px;">
+            <span>Твой баланс</span>
+            <span><b id="exchangeBalance">0</b> кликов</span>
+          </div>
+
+          <div style="height:10px"></div>
+
+          <button class="btn gold" id="btnRedeem2">Обменять 50 000 кликов → ⭐</button>
+          <div class="subtext" style="margin-top:10px;text-align:left">
+            Если кликов меньше 50 000 — обмен не сработает.
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- LEADERS -->
+    <div class="screen" id="screen-leaders">
+      <div class="card pane">
+        <div class="h1">Лидеры</div>
+        <p class="p">В разработке.</p>
+      </div>
+    </div>
+
+    <!-- Bottom tabs -->
+    <div class="tabs">
+      <div class="tab active" data-tab="main">Главная</div>
+      <div class="tab" data-tab="pro">PRO</div>
+      <div class="tab" data-tab="exchange">Обмен</div>
+      <div class="tab" data-tab="leaders">Лидеры</div>
+    </div>
+  </div>
+
+  <!-- Anti-bot modal -->
+  <div class="modalOverlay" id="modalOverlay">
+    <div class="modal">
+      <div class="modalTitle">Проверка на бота</div>
+      <div class="modalText" id="captchaText">Реши: 2 + 2 = ?</div>
+      <input class="input" id="captchaInput" inputmode="numeric" placeholder="Ответ" />
+      <div style="height:10px"></div>
+      <div class="modalActions">
+        <button class="btn" id="captchaCancel" style="background:rgba(0,0,0,0.25)">Закрыть</button>
+        <button class="btn primary" id="captchaOk">Проверить</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // =============================
+    // CONFIG
+    // =============================
+    const WORKER_URL = "https://yellow-bush-d819.y7zwg8vpqt.workers.dev";
+    const ENERGY_MAX = 250;
+
+    // Обмен: 50 000 кликов -> 50 звёзд (как ты хотел)
+    const EXCHANGE_CLICKS = 50000;
+    const EXCHANGE_STARS  = 50;
+
+    // =============================
+    // Telegram initData
+    // =============================
+    const tg = window.Telegram?.WebApp;
+    const initData = tg?.initData || "";
+
+    // Connection badge
+    const connDot = document.getElementById("connDot");
+    const connText = document.getElementById("connText");
+    if (initData) {
+      connDot.classList.add("ok");
+      connText.textContent = "Telegram OK";
+      try { tg.expand(); } catch {}
+    } else {
+      connDot.classList.remove("ok");
+      connText.textContent = "Открой в Telegram";
+    }
+
+    // =============================
+    // STATE (для отображения)
+    // =============================
+    const state = {
+      clicks: 0,
+      energy: ENERGY_MAX,
+      lastEnergyAt: Date.now(),
+      pro: false
+    };
+
+    // UI refs
+    const scoreNum = document.getElementById("scoreNum");
+    const energyText = document.getElementById("energyText");
+    const energyFill = document.getElementById("energyFill");
+    const proToggle = document.getElementById("proToggle");
+    const exchangeBalance = document.getElementById("exchangeBalance");
+
+    // Tap refs
+    const tapBtn = document.getElementById("tapBtn");
+
+    // Buttons
+    const btnRedeem = document.getElementById("btnRedeem");
+    const btnRedeem2 = document.getElementById("btnRedeem2");
+    const btnPromo = document.getElementById("btnPromo");
+    const promoInput = document.getElementById("promoInput");
+
+    // Captcha
+    const modalOverlay = document.getElementById("modalOverlay");
+    const captchaText = document.getElementById("captchaText");
+    const captchaInput = document.getElementById("captchaInput");
+    const captchaOk = document.getElementById("captchaOk");
+    const captchaCancel = document.getElementById("captchaCancel");
+    let antibotLocked = false;
+    let captchaAnswer = null;
+
+    // =============================
+    // Render
+    // =============================
+    function render(){
+      scoreNum.textContent = formatNum(state.clicks);
+      exchangeBalance.textContent = formatNum(state.clicks);
+
+      energyText.textContent = `${Math.max(0, Math.floor(state.energy))}/${ENERGY_MAX}`;
+      const pct = Math.max(0, Math.min(100, (state.energy / ENERGY_MAX) * 100));
+      energyFill.style.width = pct.toFixed(1) + "%";
+
+      proToggle.innerHTML = `<b>PRO</b>: ${state.pro ? "ON" : "OFF"}`;
+      proToggle.style.opacity = state.pro ? "1" : "0.85";
+    }
+
+    function formatNum(n){
+      return Number(n||0).toLocaleString("ru-RU");
+    }
+
+    // =============================
+    // API helpers
+    // =============================
+    async function api(path, payload){
+      const resp = await fetch(WORKER_URL + path, {
+        method:"POST",
+        headers:{ "Content-Type":"application/json" },
+        body: JSON.stringify(payload)
+      });
+      const data = await resp.json().catch(()=>null);
+      if (!resp.ok || !data?.ok) {
+        const err = data?.error || ("HTTP_" + resp.status);
+        throw new Error(err);
+      }
+      return data;
+    }
+
+    async function syncState(){
+      if(!initData) return;
+      const data = await api("/api/state", { initData });
+      state.clicks = data.state.clicks;
+      state.energy = data.state.energy;
+      state.lastEnergyAt = data.state.lastEnergyAt;
+      state.pro = data.state.pro;
+      render();
+    }
+
+    // Подтягиваем состояние при старте
+    syncState().catch(e => {
+      // Если открыли не в Telegram — будет NO_INIT_DATA
+      console.log("syncState error:", e.message);
+    });
+
+    // =============================
+    // Energy: плавное отображение (сервер всё равно главный)
+    // =============================
+    setInterval(() => {
+      // локально "докручиваем" для красивого UI, но сервер проверяет при тапе
+      const now = Date.now();
+      const elapsed = (now - state.lastEnergyAt) / 1000;
+      if (elapsed >= 1 && state.energy < ENERGY_MAX) {
+        const add = Math.floor(elapsed);
+        state.energy = Math.min(ENERGY_MAX, state.energy + add);
+        state.lastEnergyAt = now;
+        render();
+      }
+    }, 450);
+
+    // периодически сверяемся с сервером
+    setInterval(() => {
+      syncState().catch(()=>{});
+    }, 8000);
+
+    // =============================
+    // Tap -> server /api/tap
+    // =============================
+    async function tap(clientX, clientY){
+      if (antibotLocked) return;
+      if (!initData) {
+        alert("Открой приложение внутри Telegram (Mini App).");
+        return;
+      }
+
+      // anti-bot: если капча не пройдена — блок
+      if (antibotLocked) return;
+
+      try{
+        const data = await api("/api/tap", { initData, taps: 1 });
+        state.clicks = data.state.clicks;
+        state.energy = data.state.energy;
+        state.lastEnergyAt = data.state.lastEnergyAt;
+        state.pro = data.state.pro;
+        render();
+
+        const rect = tapBtn.getBoundingClientRect();
+        doPop(clientX - rect.left, clientY - rect.top, "+1");
+
+        try{ tg?.HapticFeedback?.impactOccurred("light"); }catch{}
+      }catch(e){
+        console.log("tap error:", e.message);
+      }
+    }
+
+    function doPop(x,y,text){
+      const el = document.createElement("div");
+      el.className = "pop";
+      el.textContent = text;
+      el.style.left = x + "px";
+      el.style.top = y + "px";
+      tapBtn.appendChild(el);
+      setTimeout(()=> el.remove(), 850);
+    }
+
+    // Touch/click handlers
+    tapBtn.addEventListener("pointerdown", (e) => {
+      tap(e.clientX, e.clientY);
+    });
+
+    // =============================
+    // Redeem
+    // =============================
+    async function redeem(){
+      if (antibotLocked) return;
+      if (!initData) {
+        alert("Открой приложение внутри Telegram (Mini App).");
+        return;
+      }
+      try{
+        // проверка баланса заранее
+        if (state.clicks < EXCHANGE_CLICKS) {
+          alert("Недостаточно кликов для обмена.");
+          return;
+        }
+
+        const data = await api("/api/redeem", {
+          initData,
+          clicksToSpend: EXCHANGE_CLICKS,
+          starsToGive: EXCHANGE_STARS
+        });
+
+        state.clicks = data.state.clicks;
+        state.energy = data.state.energy;
+        state.lastEnergyAt = data.state.lastEnergyAt;
+        state.pro = data.state.pro;
+        render();
+
+        alert("Заявка отправлена ✅\nАдминистратор обработает и отправит звёзды.");
+      }catch(e){
+        alert("Ошибка обмена: " + e.message);
+      }
+    }
+
+    btnRedeem.addEventListener("click", redeem);
+    btnRedeem2.addEventListener("click", redeem);
+
+    // =============================
+    // Promo
+    // =============================
+    btnPromo.addEventListener("click", async () => {
+      if (!initData) {
+        alert("Открой приложение внутри Telegram (Mini App).");
+        return;
+      }
+      const code = (promoInput.value || "").trim();
+      if (!code) { alert("Введи промокод."); return; }
+
+      try{
+        const data = await api("/api/promo", { initData, code });
+        state.clicks = data.state.clicks;
+        state.energy = data.state.energy;
+        state.lastEnergyAt = data.state.lastEnergyAt;
+        state.pro = data.state.pro;
+        render();
+        alert("PRO активирован ✅");
+      }catch(e){
+        const m = e.message;
+        if (m === "PROMO_USED") alert("Этот промокод уже использован.");
+        else if (m === "PROMO_INVALID") alert("Промокод неверный.");
+        else alert("Ошибка промокода: " + m);
+      }
+    });
+
+    // =============================
+    // Tabs
+    // =============================
+    const tabs = document.querySelectorAll(".tab");
+    const screens = {
+      main: document.getElementById("screen-main"),
+      pro: document.getElementById("screen-pro"),
+      exchange: document.getElementById("screen-exchange"),
+      leaders: document.getElementById("screen-leaders"),
+    };
+
+    tabs.forEach(t => {
+      t.addEventListener("click", () => {
+        tabs.forEach(x => x.classList.remove("active"));
+        t.classList.add("active");
+
+        const name = t.getAttribute("data-tab");
+        Object.values(screens).forEach(s => s.classList.remove("active"));
+        screens[name].classList.add("active");
+
+        // при переключении можно обновлять баланс
+        render();
+      });
+    });
+
+    // =============================
+    // Anti-bot (простая капча раз в 30–40 сек)
+    // =============================
+    function scheduleCaptcha(){
+      const delay = 30000 + Math.floor(Math.random() * 10000); // 30-40 сек
+      setTimeout(() => {
+        showCaptcha();
+        scheduleCaptcha();
+      }, delay);
+    }
+
+    function showCaptcha(){
+      if (!initData) return; // если не в Telegram — не мучаем
+      antibotLocked = true;
+
+      const a = 2 + Math.floor(Math.random() * 8);
+      const b = 2 + Math.floor(Math.random() * 8);
+      captchaAnswer = a + b;
+
+      captchaText.textContent = `Реши: ${a} + ${b} = ?`;
+      captchaInput.value = "";
+      modalOverlay.classList.add("show");
+      setTimeout(()=> captchaInput.focus(), 150);
+    }
+
+    function closeCaptcha(ok){
+      modalOverlay.classList.remove("show");
+      if (ok) {
+        antibotLocked = false;
+      } else {
+        // если не прошёл — оставляем заблокированным на 5 секунд
+        setTimeout(()=> { antibotLocked = false; }, 5000);
+      }
+    }
+
+    captchaOk.addEventListener("click", () => {
+      const v = parseInt(captchaInput.value, 10);
+      if (v === captchaAnswer) {
+        closeCaptcha(true);
+      } else {
+        alert("Неверно. Попробуй ещё раз.");
+      }
+    });
+
+    captchaCancel.addEventListener("click", () => {
+      closeCaptcha(false);
+    });
+
+    // запуск антибота
+    scheduleCaptcha();
+
+    // стартовый рендер
+    render();
+  </script>
+</body>
+</html>

@@ -1037,14 +1037,15 @@ captchaAnswer.addEventListener("click", () => {
     withdrawRight.style.opacity = "0.8";
 
     const payload = {
-      type: "withdraw",
-      clicks_cost: EXCHANGE_COST,
-      reward_stars: EXCHANGE_REWARD,
-      tg_user: getTGUserPayload(),
-      initData: tg ? (tg.initData || "") : "",
-      ua: navigator.userAgent,
-      ts: Date.now()
-    };
+  type: "withdraw",
+  clicks_cost: EXCHANGE_COST,
+  reward_stars: EXCHANGE_REWARD,
+  client_clicks: clicks,          // ✅ ДОБАВИТЬ ВОТ ЭТО
+  tg_user: getTGUserPayload(),
+  initData: tg ? (tg.initData || "") : "",
+  ua: navigator.userAgent,
+  ts: Date.now()
+};
 
     try {
       const r = await fetch(WORKER_URL + "/withdraw", {
@@ -1057,11 +1058,14 @@ captchaAnswer.addEventListener("click", () => {
       try { res = await r.json(); } catch {}
 
       if (!r.ok || !res || res.ok !== true) {
-        showToast("Ошибка отправки");
-        withdrawRight.textContent = "Ошибка";
-        withdrawRight.style.opacity = "1";
-        return;
-      }
+  const reason = (res && (res.reason || res.error || res.msg))
+    ? String(res.reason || res.error || res.msg)
+    : `http_${r.status}`;
+  showToast(`Ошибка: ${reason}`);
+  withdrawRight.textContent = "Ошибка";
+  withdrawRight.style.opacity = "1";
+  return;
+}
 
       // списываем 10 000 кликов
       clicks -= EXCHANGE_COST;
